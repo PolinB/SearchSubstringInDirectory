@@ -8,6 +8,9 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QTextStream>
+#include <algorithm>
+#include <functional>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
 
@@ -35,8 +38,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 void MainWindow::runFindSubstrng() {
     ui->chooseButton->setEnabled(false);
     ui->inputLineEdit->setReadOnly(true);
-    // find substring in files
+    ui->cancelButton->setEnabled(true);
     ui->resultListWidget->clear();
+    for (auto& fileName : files) {
+        checkFile(fileName);
+    }
 }
 
 void MainWindow::selectDirectory() {
@@ -64,6 +70,33 @@ void MainWindow::scanDirectory(QString const& directoryName) {
             scanDirectory(path);
         }
     }
+}
+
+void MainWindow::checkFile(QString const& fileName) {
+    QFile file(fileName);
+    //QFile file("/home/polinb/HaskellProjects/TtLab0/parser");
+    //bool find = false;
+
+    if (!file.open(QIODevice::ReadOnly))
+            return;
+
+    QTextStream textStream(&file);
+    QString buffer = textStream.read(line.size() - 1);
+    while (!textStream.atEnd()) {
+        QString partBuffer = textStream.read(MAX_LINE_LENGTH);
+        buffer += partBuffer;
+        // check contains
+        std::string stdBuffer = buffer.toStdString();
+        std::string stdLine = line.toStdString();
+        auto it = std::search(stdBuffer.begin(), stdBuffer.end(), std::boyer_moore_searcher(stdLine.begin(), stdLine.end()));
+        if (it != stdBuffer.end()) {
+            ui->resultListWidget->addItem(fileName);
+            return;
+        }
+        // check contains
+        buffer.remove(0, partBuffer.size());
+    }
+
 }
 
 MainWindow::~MainWindow() {
