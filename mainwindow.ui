@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
-    <height>248</height>
+    <width>597</width>
+    <height>396</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,6 +17,13 @@
    <layout class="QGridLayout" name="gridLayout">
     <item row="2" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="clearButton">
+        <property name="text">
+         <string>Clear</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
@@ -109,7 +116,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>325</width>
+     <width>597</width>
      <height>22</height>
     </rect>
    </property>

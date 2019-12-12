@@ -33,16 +33,34 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(ui->findButton, &QPushButton::clicked, this, &MainWindow::runFindSubstrng);
 
+    //connect()
+
 }
+
+/*void MainWindow::beginState() {
+    ui->inputLineEdit->clear();
+    ui->resultListWidget->clear();
+    ui->chooseButton->setEnabled(true);
+    ui->findButton->setEnabled(false);
+    ui->cancelButton->setEnabled(false);
+}*/
 
 void MainWindow::runFindSubstrng() {
     ui->chooseButton->setEnabled(false);
     ui->inputLineEdit->setReadOnly(true);
     ui->cancelButton->setEnabled(true);
+    ui->findButton->setEnabled(false);
     ui->resultListWidget->clear();
+    inWork = true;
     for (auto& fileName : files) {
         checkFile(fileName);
     }
+    inWork = false;
+
+    ui->findButton->setEnabled(true);
+    ui->cancelButton->setEnabled(false);
+    ui->chooseButton->setEnabled(true);
+    ui->inputLineEdit->setReadOnly(false);
 }
 
 void MainWindow::selectDirectory() {
@@ -50,6 +68,7 @@ void MainWindow::selectDirectory() {
                                                     QString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!directoryName.isEmpty()) {
         ui->resultListWidget->clear();
+        files.clear();
         scanDirectory(directoryName);
         directoryChoose = true;
         if (!line.isEmpty()) {
