@@ -11,6 +11,9 @@
 #include <QTextStream>
 #include <algorithm>
 #include <functional>
+#include <QFuture>
+#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentMap>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
 
@@ -33,17 +36,27 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(ui->findButton, &QPushButton::clicked, this, &MainWindow::runFindSubstrng);
 
-    //connect()
+    connect(&scanning, &QFutureWatcher<void>::finished, this, [this] {
+        directoryChoose = true;
+        if (!line.isEmpty()) {
+            ui->findButton->setEnabled(true);
+        }
+        ui->resultListWidget->addItem("Hello");
+    });
+
+    connect(ui->cancelButton, &QPushButton::clicked, this, [this] {canceled = 1;});
+
+    connect(&searching, &QFutureWatcher<void>::finished, this, [this] {
+        ui->findButton->setEnabled(true);
+        ui->cancelButton->setEnabled(false);
+        canceled = false;
+        ui->chooseButton->setEnabled(true);
+        ui->inputLineEdit->setReadOnly(false);
+        ui->resultListWidget->addItem("END SEARCHING");
+    });
 
 }
 
-/*void MainWindow::beginState() {
-    ui->inputLineEdit->clear();
-    ui->resultListWidget->clear();
-    ui->chooseButton->setEnabled(true);
-    ui->findButton->setEnabled(false);
-    ui->cancelButton->setEnabled(false);
-}*/
 
 void MainWindow::runFindSubstrng() {
     ui->chooseButton->setEnabled(false);
@@ -51,16 +64,8 @@ void MainWindow::runFindSubstrng() {
     ui->cancelButton->setEnabled(true);
     ui->findButton->setEnabled(false);
     ui->resultListWidget->clear();
-    inWork = true;
-    for (auto& fileName : files) {
-        checkFile(fileName);
-    }
-    inWork = false;
-
-    ui->findButton->setEnabled(true);
-    ui->cancelButton->setEnabled(false);
-    ui->chooseButton->setEnabled(true);
-    ui->inputLineEdit->setReadOnly(false);
+    QFuture<void> future = QtConcurrent::map(files, [this] (QString const& fileName) { checkFile(fileName);});
+    searching.setFuture(/*QtConcurrent::mapped(files, &MainWindow::checkFile)*/future);
 }
 
 void MainWindow::selectDirectory() {
@@ -69,18 +74,20 @@ void MainWindow::selectDirectory() {
     if (!directoryName.isEmpty()) {
         ui->resultListWidget->clear();
         files.clear();
-        scanDirectory(directoryName);
-        directoryChoose = true;
-        if (!line.isEmpty()) {
-            ui->findButton->setEnabled(true);
-        }
+        scanning.setFuture(QtConcurrent::run([this, directoryName] {scanDirectory(directoryName);}));
     }
 }
 
 void MainWindow::scanDirectory(QString const& directoryName) {
+    if (canceled == 1) {
+        return;
+    }
     QDir directory(directoryName);
     QFileInfoList list = directory.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
     for (QFileInfo& fileInfo : list) {
+        if (canceled == 1) {
+            return;
+        }
         QString path = fileInfo.absoluteFilePath();
         if (fileInfo.isFile()) {
             files.push_back(path);
@@ -93,8 +100,6 @@ void MainWindow::scanDirectory(QString const& directoryName) {
 
 void MainWindow::checkFile(QString const& fileName) {
     QFile file(fileName);
-    //QFile file("/home/polinb/HaskellProjects/TtLab0/parser");
-    //bool find = false;
 
     if (!file.open(QIODevice::ReadOnly))
             return;
@@ -102,14 +107,24 @@ void MainWindow::checkFile(QString const& fileName) {
     QTextStream textStream(&file);
     QString buffer = textStream.read(line.size() - 1);
     while (!textStream.atEnd()) {
+        if (canceled == 1) {
+            return;
+        }
         QString partBuffer = textStream.read(MAX_LINE_LENGTH);
         buffer += partBuffer;
         // check contains
         std::string stdBuffer = buffer.toStdString();
         std::string stdLine = line.toStdString();
+
+        if (canceled == 1) {
+            return;
+        }
         auto it = std::search(stdBuffer.begin(), stdBuffer.end(), std::boyer_moore_searcher(stdLine.begin(), stdLine.end()));
         if (it != stdBuffer.end()) {
             ui->resultListWidget->addItem(fileName);
+            return;
+        }
+        if (canceled == 1) {
             return;
         }
         // check contains

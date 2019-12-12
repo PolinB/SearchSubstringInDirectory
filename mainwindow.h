@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QSet>
 #include <QFileInfo>
+#include <QFutureWatcher>
 
 namespace Ui {
 class MainWindow;
@@ -21,17 +22,21 @@ private slots:
     void selectDirectory();
     void scanDirectory(QString const& directory);
     void runFindSubstrng();
-    void checkFile(QString const& file);
-    //void beginState();
 
 private:
+    void checkFile(QString const& file);
+
+    static const qint32 MAX_LINE_LENGTH = 1024;
+
     Ui::MainWindow *ui;
     QString line;
-    bool directoryChoose = false;
     QVector<QString> files;
-    qint32 MAX_LINE_LENGTH = 1024;
-    bool inWork = false;
-    bool canceled = false;
+
+    QFutureWatcher<void> scanning;
+    QFutureWatcher<void> searching;
+
+    bool directoryChoose = false;
+    QAtomicInt canceled = 0;
 };
 
 #endif // MAINWINDOW_H
