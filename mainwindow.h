@@ -21,12 +21,16 @@ public:
 
 private slots:
     void selectDirectory();
-    void scanDirectory(QString const& directory);
+    void scanDirectory(QString const& directoryName);
     void runSearch();
     void afterSearch();
     void afterScan();
     void changeLine();
     bool cancel();
+    //void setProgress(qint64 x);
+
+signals:
+    void setProgress(qint64 x);
 
 private:
     void checkFile(QString const& file);
@@ -44,6 +48,8 @@ private:
     QFutureWatcher<void> scanning;
     QFutureWatcher<void> searching;
 
+    QAtomicInt dirInQueue = 0;
+    QAtomicInt finishedDir = 0;
     bool directoryChoose = false;
     QAtomicInt isCanceled = 0;
     QAtomicInt isCleared = 0;

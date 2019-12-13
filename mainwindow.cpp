@@ -24,9 +24,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->inputLineEdit, &QLineEdit::textChanged, this, &MainWindow::changeLine);
 
     connect(ui->chooseButton, &QPushButton::clicked, this, &MainWindow::selectDirectory);
+    connect(&scanning, &QFutureWatcher<void>::started, ui->progressBar, &QProgressBar::reset);
     connect(&scanning, &QFutureWatcher<void>::finished, this, &MainWindow::afterScan);
+    connect(this, &MainWindow::setProgress, ui->progressBar, &QProgressBar::setValue);
 
     connect(ui->findButton, &QPushButton::clicked, this, &MainWindow::runSearch);
+    connect(&searching, &QFutureWatcher<void>::started, ui->progressBar, &QProgressBar::reset);
+    connect(&searching, &QFutureWatcher<void>::progressRangeChanged, ui->progressBar, &QProgressBar::setRange);
+    connect(&searching, &QFutureWatcher<void>::progressValueChanged, ui->progressBar, &QProgressBar::setValue);
     connect(&searching, &QFutureWatcher<void>::finished, this, &MainWindow::afterSearch);
 
     connect(ui->cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
@@ -40,6 +45,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 }
 
 void MainWindow::toStartState() {
+    ui->progressBar->setValue(0);
+    ui->progressBar->setRange(0, 100);
+    ui->progressBar->setDisabled(true);
     ui->inputLineEdit->clear();
     ui->resultListWidget->clear();
     files.clear();
@@ -83,7 +91,12 @@ void MainWindow::selectDirectory() {
         ui->resultListWidget->clear();
         ui->cancelButton->setEnabled(true);
         ui->findButton->setEnabled(false);
+        ui->progressBar->setValue(0);
+        ui->progressBar->setRange(0, 100);
+        ui->progressBar->setDisabled(false);
 
+        dirInQueue = 1;
+        finishedDir = 0;
         scanning.setFuture(QtConcurrent::run([this, directoryName] {scanDirectory(directoryName);}));
     }
 }
@@ -95,6 +108,7 @@ void MainWindow::selectDirectory() {
  * Add all file into 'files'. Do it recursively.
  */
 void MainWindow::scanDirectory(QString const& directoryName) {
+    //++dirInQueue;
     if (isCanceled == 1) {
         return;
     }
@@ -108,9 +122,16 @@ void MainWindow::scanDirectory(QString const& directoryName) {
         if (fileInfo.isFile()) {
             files.push_back(path);
         } else if (fileInfo.isDir()){
+            ++dirInQueue;
             scanDirectory(path);
         }
     }
+    ++finishedDir;
+    /*addToResultList.lock();
+    ui->progressBar->setRange(0, dirInQueue);
+    ui->progressBar->setValue((finishedDir * 100) / dirInQueue);
+    addToResultList.unlock();*/
+    emit setProgress((finishedDir * 100) / dirInQueue);
 }
 
 void MainWindow::afterScan() {
@@ -125,6 +146,10 @@ void MainWindow::afterScan() {
         files.clear();
         isCanceled = 0;
     }
+    //ui->progressBar->setRange(0, 100);
+    //ui->progressBar->setValue(100);
+    ui->progressBar->setDisabled(true);
+
     ui->cancelButton->setEnabled(false);
     ui->resultListWidget->addItem("END SCANNING");
 }
@@ -140,6 +165,9 @@ void MainWindow::runSearch() {
     ui->inputLineEdit->setReadOnly(true);
     ui->findButton->setEnabled(false);
     ui->resultListWidget->clear();
+
+    ui->progressBar->setValue(0);
+    ui->progressBar->setDisabled(false);
 
     searching.setFuture(QtConcurrent::map(files, [this] (QString const& fileName) { checkFile(fileName);}));
 }
@@ -205,8 +233,11 @@ void MainWindow::afterSearch() {
         ui->chooseButton->setEnabled(true);
         ui->inputLineEdit->setReadOnly(false);
         ui->cancelButton->setEnabled(false);
+        //ui->progressBar->setValue(0);
+        ui->progressBar->setDisabled(true);
         isCanceled = 0;
     }
+
     ui->resultListWidget->addItem("END SEARCHING");
 }
 
