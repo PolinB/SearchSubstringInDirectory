@@ -5,6 +5,7 @@
 #include <QSet>
 #include <QFileInfo>
 #include <QFutureWatcher>
+#include <QMutex>
 
 namespace Ui {
 class MainWindow;
@@ -21,13 +22,20 @@ public:
 private slots:
     void selectDirectory();
     void scanDirectory(QString const& directory);
-    void runFindSubstrng();
-    void cancel();
+    void runSearch();
+    void afterSearch();
+    void afterScan();
+    void changeLine();
+    bool cancel();
 
 private:
     void checkFile(QString const& file);
+    void toStartState();
+    quint64 searchInBuffer(QString const& buffer);
 
-    static const qint32 MAX_LINE_LENGTH = 1024;
+    QMutex addToResultList;
+
+    static const quint32 MAX_BLOCK_SIZE = 1024;
 
     Ui::MainWindow *ui;
     QString line;
@@ -37,7 +45,8 @@ private:
     QFutureWatcher<void> searching;
 
     bool directoryChoose = false;
-    QAtomicInt canceled = 0;
+    QAtomicInt isCanceled = 0;
+    QAtomicInt isCleared = 0;
 };
 
 #endif // MAINWINDOW_H
