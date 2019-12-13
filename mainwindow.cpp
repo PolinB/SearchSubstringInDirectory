@@ -38,13 +38,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(&scanning, &QFutureWatcher<void>::finished, this, [this] {
         directoryChoose = true;
+        ui->cancelButton->setEnabled(false);
         if (!line.isEmpty()) {
             ui->findButton->setEnabled(true);
         }
-        ui->resultListWidget->addItem("Hello");
+        ui->resultListWidget->addItem("END SCANNING");
     });
 
-    connect(ui->cancelButton, &QPushButton::clicked, this, [this] {canceled = 1;});
+    connect(ui->cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
 
     connect(&searching, &QFutureWatcher<void>::finished, this, [this] {
         ui->findButton->setEnabled(true);
@@ -54,9 +55,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         ui->inputLineEdit->setReadOnly(false);
         ui->resultListWidget->addItem("END SEARCHING");
     });
-
 }
 
+void::MainWindow::cancel() {
+    canceled = 1;
+    if (searching.isRunning()) {
+        searching.cancel();
+    } if (scanning.isRunning()) {
+        scanning.cancel();
+    }
+}
 
 void MainWindow::runFindSubstrng() {
     ui->chooseButton->setEnabled(false);
@@ -64,8 +72,9 @@ void MainWindow::runFindSubstrng() {
     ui->cancelButton->setEnabled(true);
     ui->findButton->setEnabled(false);
     ui->resultListWidget->clear();
+
     QFuture<void> future = QtConcurrent::map(files, [this] (QString const& fileName) { checkFile(fileName);});
-    searching.setFuture(/*QtConcurrent::mapped(files, &MainWindow::checkFile)*/future);
+    searching.setFuture(future);
 }
 
 void MainWindow::selectDirectory() {
@@ -74,6 +83,7 @@ void MainWindow::selectDirectory() {
     if (!directoryName.isEmpty()) {
         ui->resultListWidget->clear();
         files.clear();
+        ui->cancelButton->setEnabled(true);
         scanning.setFuture(QtConcurrent::run([this, directoryName] {scanDirectory(directoryName);}));
     }
 }
@@ -91,7 +101,6 @@ void MainWindow::scanDirectory(QString const& directoryName) {
         QString path = fileInfo.absoluteFilePath();
         if (fileInfo.isFile()) {
             files.push_back(path);
-            ui->resultListWidget->addItem(path);
         } else if (fileInfo.isDir()){
             scanDirectory(path);
         }

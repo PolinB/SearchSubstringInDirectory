@@ -22,6 +22,7 @@ private slots:
     void selectDirectory();
     void scanDirectory(QString const& directory);
     void runFindSubstrng();
+    void cancel();
 
 private:
     void checkFile(QString const& file);
