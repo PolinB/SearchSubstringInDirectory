@@ -21,27 +21,58 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     toStartState();
 
-    connect(ui->inputLineEdit, &QLineEdit::textChanged, this, &MainWindow::changeLine);
+    //ui->menuFilters->setTearOffEnabled(true);
 
-    connect(ui->chooseButton, &QPushButton::clicked, this, &MainWindow::selectDirectory);
+    connect(ui->actionExit, &QAction::triggered, this, &QApplication::quit);
+
+    connect(ui->actionTxt, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionCpp, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionJava, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionKt, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionPdf, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionCss, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionHtml, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionMd, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionJs, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionH, &QAction::triggered, this, &MainWindow::chooseFileType);
+    connect(ui->actionHs, &QAction::triggered, this, &MainWindow::chooseFileType);
+
+    connect(ui->inputLineEdit, &QLineEdit::textChanged, this, &MainWindow::changeLine);
+    connect(ui->actionClearInput, &QAction::triggered, ui->inputLineEdit, &QLineEdit::clear);
+
+    connect(ui->actionChooseDirectory, &QAction::triggered, this, &MainWindow::selectDirectory);
     connect(&scanning, &QFutureWatcher<void>::started, ui->progressBar, &QProgressBar::reset);
     connect(&scanning, &QFutureWatcher<void>::finished, this, &MainWindow::afterScan);
     connect(this, &MainWindow::setProgress, ui->progressBar, &QProgressBar::setValue);
 
-    connect(ui->findButton, &QPushButton::clicked, this, &MainWindow::runSearch);
+    connect(ui->actionFind, &QAction::triggered, this, &MainWindow::runSearch);
     connect(&searching, &QFutureWatcher<void>::started, ui->progressBar, &QProgressBar::reset);
     connect(&searching, &QFutureWatcher<void>::progressRangeChanged, ui->progressBar, &QProgressBar::setRange);
     connect(&searching, &QFutureWatcher<void>::progressValueChanged, ui->progressBar, &QProgressBar::setValue);
     connect(&searching, &QFutureWatcher<void>::finished, this, &MainWindow::afterSearch);
 
-    connect(ui->cancelButton, &QPushButton::clicked, this, &MainWindow::cancel);
-    connect(ui->clearButton, &QPushButton::clicked, this, [this] {
+    connect(ui->actionCancel, &QAction::triggered, this, &MainWindow::cancel);
+    connect(ui->actionClear, &QAction::triggered, this, [this] {
        isCleared = 1;
        if (!cancel()) {
            toStartState();
            isCleared = 0;
        }
     });
+}
+
+void MainWindow::chooseFileType() {
+    QAction *action = (QAction *)sender();
+    bool setInFilters = filters[action->text()];
+
+    filters[action->text()] = (!setInFilters);
+    if (setInFilters) {
+        filtesSize -= 1;
+        action->setIcon(QIcon());
+    } else {
+        action->setIcon(QIcon(":/pref/img/checked.png"));
+        filtesSize += 1;
+    }
 }
 
 void MainWindow::toStartState() {
@@ -52,20 +83,21 @@ void MainWindow::toStartState() {
     ui->resultListWidget->clear();
     files.clear();
     line.clear();
+    ui->statusBar->clearMessage();
 
     directoryChoose = false;
-    ui->chooseButton->setEnabled(true);
-    ui->findButton->setEnabled(false);
-    ui->cancelButton->setEnabled(false);
+    ui->actionChooseDirectory->setEnabled(true);
+    ui->actionFind->setEnabled(false);
+    ui->actionCancel->setEnabled(false);
     ui->inputLineEdit->setReadOnly(false);
 }
 
 void MainWindow::changeLine() {
     line = ui->inputLineEdit->text();
     if (!line.isEmpty() && directoryChoose) {
-        ui->findButton->setEnabled(true);
+        ui->actionFind->setEnabled(true);
     } else {
-        ui->findButton->setEnabled(false);
+        ui->actionFind->setEnabled(false);
     }
 }
 
@@ -89,26 +121,21 @@ void MainWindow::selectDirectory() {
     if (!directoryName.isEmpty()) {
         files.clear();
         ui->resultListWidget->clear();
-        ui->cancelButton->setEnabled(true);
-        ui->findButton->setEnabled(false);
+        ui->actionCancel->setEnabled(true);
+        ui->actionFind->setEnabled(false);
         ui->progressBar->setValue(0);
         ui->progressBar->setRange(0, 100);
         ui->progressBar->setDisabled(false);
+        ui->statusBar->showMessage("Scanning...");
 
         dirInQueue = 1;
         finishedDir = 0;
+        currentDirectoryName = directoryName;
         scanning.setFuture(QtConcurrent::run([this, directoryName] {scanDirectory(directoryName);}));
     }
 }
 
-/**
- * @brief MainWindow::scanDirectory
- * @param directoryName
- *
- * Add all file into 'files'. Do it recursively.
- */
 void MainWindow::scanDirectory(QString const& directoryName) {
-    //++dirInQueue;
     if (isCanceled == 1) {
         return;
     }
@@ -120,66 +147,60 @@ void MainWindow::scanDirectory(QString const& directoryName) {
         }
         QString path = fileInfo.absoluteFilePath();
         if (fileInfo.isFile()) {
-            files.push_back(path);
+            files.push_back(fileInfo);
         } else if (fileInfo.isDir()){
             ++dirInQueue;
             scanDirectory(path);
         }
     }
     ++finishedDir;
-    /*addToResultList.lock();
-    ui->progressBar->setRange(0, dirInQueue);
-    ui->progressBar->setValue((finishedDir * 100) / dirInQueue);
-    addToResultList.unlock();*/
     emit setProgress((finishedDir * 100) / dirInQueue);
 }
 
 void MainWindow::afterScan() {
     if (!isCanceled) {
         directoryChoose = true;
+        ui->labelOutput->setText("This text in files: " + currentDirectoryName);
 
         if (!line.isEmpty()) {
-            ui->findButton->setEnabled(true);
+            ui->actionFind->setEnabled(true);
         }
     } else {
         directoryChoose = false;
+        currentDirectoryName = false;
+        ui->labelOutput->setText("This text in files: ");
+
         files.clear();
         isCanceled = 0;
     }
-    //ui->progressBar->setRange(0, 100);
-    //ui->progressBar->setValue(100);
     ui->progressBar->setDisabled(true);
 
-    ui->cancelButton->setEnabled(false);
-    ui->resultListWidget->addItem("END SCANNING");
+    ui->actionCancel->setEnabled(false);
+    ui->statusBar->showMessage("End scanning.");
 }
 
-/**
- * @brief MainWindow::runSearch
- * Set searching state and run searching in new threads.
- */
 void MainWindow::runSearch() {
-    ui->cancelButton->setEnabled(true);
+    ui->actionCancel->setEnabled(true);
 
-    ui->chooseButton->setEnabled(false);
+    ui->actionChooseDirectory->setEnabled(false);
     ui->inputLineEdit->setReadOnly(true);
-    ui->findButton->setEnabled(false);
+    ui->actionFind->setEnabled(false);
     ui->resultListWidget->clear();
 
     ui->progressBar->setValue(0);
     ui->progressBar->setDisabled(false);
 
-    searching.setFuture(QtConcurrent::map(files, [this] (QString const& fileName) { checkFile(fileName);}));
+    ui->statusBar->showMessage("Searching...");
+
+    searching.setFuture(QtConcurrent::map(files, [this] (QFileInfo const& fileInfo) { checkFile(fileInfo);}));
 }
 
-/**
- * @brief MainWindow::checkFile
- * @param fileName
- *
- * File processing...
- */
-void MainWindow::checkFile(QString const& fileName) {
-    QFile file(fileName);
+void MainWindow::checkFile(QFileInfo const& fileInfo) {
+    QFile file(fileInfo.absoluteFilePath());
+
+    if (filtesSize != 0 && !filters[(QString)("." + fileInfo.completeSuffix())]) {
+        return;
+    }
 
     if (!file.open(QIODevice::ReadOnly))
             return;
@@ -201,7 +222,7 @@ void MainWindow::checkFile(QString const& fileName) {
     if (numberInFile != 0 && !(isCanceled == 1)) {
         addToResultList.lock();
 
-        ui->resultListWidget->addItem(fileName);
+        ui->resultListWidget->addItem(fileInfo.filePath());
 
         addToResultList.unlock();
     }
@@ -229,16 +250,15 @@ void MainWindow::afterSearch() {
         isCleared = 0;
         isCanceled = 0;
     } else {
-        ui->findButton->setEnabled(true);
-        ui->chooseButton->setEnabled(true);
         ui->inputLineEdit->setReadOnly(false);
-        ui->cancelButton->setEnabled(false);
-        //ui->progressBar->setValue(0);
+        ui->actionFind->setEnabled(true);
+        ui->actionChooseDirectory->setEnabled(true);
+        ui->actionCancel->setEnabled(false);
         ui->progressBar->setDisabled(true);
         isCanceled = 0;
     }
 
-    ui->resultListWidget->addItem("END SEARCHING");
+    ui->statusBar->showMessage("End searching.");
 }
 
 MainWindow::~MainWindow() {

@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/pref">
+        <file>img/search.png</file>
+        <file>img/folder (1).png</file>
+        <file>img/clear-format.png</file>
+        <file>img/cancel.png</file>
+        <file>img/bin.png</file>
+        <file>img/cross.png</file>
+        <file>img/multimedia.png</file>
+        <file>img/folder.png</file>
+        <file>img/trash.png</file>
+        <file>img/prohibition.png</file>
+        <file>img/folder (2).png</file>
+        <file>img/checked.png</file>
+    </qresource>
+</RCC>

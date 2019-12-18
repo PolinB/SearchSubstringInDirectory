@@ -15,86 +15,20 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QPushButton" name="clearButton">
-        <property name="text">
-         <string>Clear</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>37</width>
-          <height>17</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="chooseButton">
-        <property name="text">
-         <string>Choose Directory</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="findButton">
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string>Find</string>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>10</width>
-          <height>10</height>
-         </size>
-        </property>
-        <property name="autoRepeatDelay">
-         <number>300</number>
-        </property>
-        <property name="autoDefault">
-         <bool>true</bool>
-        </property>
-        <property name="default">
-         <bool>false</bool>
-        </property>
-        <property name="flat">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="cancelButton">
-        <property name="text">
-         <string>Cancel</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
     <item row="1" column="0">
      <widget class="QLineEdit" name="inputLineEdit"/>
     </item>
-    <item row="3" column="0">
+    <item row="2" column="0">
      <widget class="QLabel" name="labelOutput">
       <property name="text">
        <string>This text in file:</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="0">
+    <item row="5" column="0">
      <widget class="QListWidget" name="resultListWidget"/>
     </item>
-    <item row="5" column="0">
+    <item row="4" column="0">
      <widget class="Line" name="line">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -108,7 +42,7 @@
       </property>
      </widget>
     </item>
-    <item row="7" column="0">
+    <item row="6" column="0">
      <widget class="QProgressBar" name="progressBar">
       <property name="value">
        <number>0</number>
@@ -132,17 +66,173 @@
      <string>File</string>
     </property>
     <addaction name="separator"/>
+    <addaction name="actionChooseDirectory"/>
+    <addaction name="actionClearInput"/>
+    <addaction name="actionFind"/>
+    <addaction name="actionCancel"/>
+    <addaction name="actionClear"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuFilters">
+    <property name="title">
+     <string>Filters</string>
+    </property>
+    <addaction name="actionTxt"/>
+    <addaction name="actionH"/>
+    <addaction name="actionCpp"/>
+    <addaction name="actionJava"/>
+    <addaction name="actionKt"/>
+    <addaction name="actionHs"/>
+    <addaction name="actionPdf"/>
+    <addaction name="actionMd"/>
+    <addaction name="actionCss"/>
+    <addaction name="actionHtml"/>
+    <addaction name="actionJs"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuFilters"/>
    <addaction name="menuHelp"/>
   </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionChooseDirectory"/>
+   <addaction name="separator"/>
+   <addaction name="actionFind"/>
+   <addaction name="separator"/>
+   <addaction name="actionCancel"/>
+   <addaction name="separator"/>
+   <addaction name="actionClear"/>
+   <addaction name="separator"/>
+  </widget>
+  <action name="actionChooseDirectory">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/folder (2).png</normaloff>:/pref/img/folder (2).png</iconset>
+   </property>
+   <property name="text">
+    <string>Choose Directory</string>
+   </property>
+  </action>
+  <action name="actionFind">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/multimedia.png</normaloff>:/pref/img/multimedia.png</iconset>
+   </property>
+   <property name="text">
+    <string>Find</string>
+   </property>
+   <property name="shortcut">
+    <string>Return</string>
+   </property>
+  </action>
+  <action name="actionCancel">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/prohibition.png</normaloff>:/pref/img/prohibition.png</iconset>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/trash.png</normaloff>:/pref/img/trash.png</iconset>
+   </property>
+   <property name="text">
+    <string>Clear</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/cross.png</normaloff>:/pref/img/cross.png</iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionClearInput">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/clear-format.png</normaloff>:/pref/img/clear-format.png</iconset>
+   </property>
+   <property name="text">
+    <string>Clear input</string>
+   </property>
+  </action>
+  <action name="actionTxt">
+   <property name="text">
+    <string>.txt</string>
+   </property>
+  </action>
+  <action name="actionCpp">
+   <property name="text">
+    <string>.cpp</string>
+   </property>
+  </action>
+  <action name="actionJava">
+   <property name="text">
+    <string>.java</string>
+   </property>
+  </action>
+  <action name="actionKt">
+   <property name="text">
+    <string>.kt</string>
+   </property>
+  </action>
+  <action name="actionPdf">
+   <property name="text">
+    <string>.pdf</string>
+   </property>
+  </action>
+  <action name="actionCss">
+   <property name="text">
+    <string>.css</string>
+   </property>
+  </action>
+  <action name="actionHtml">
+   <property name="text">
+    <string>.html</string>
+   </property>
+  </action>
+  <action name="actionMd">
+   <property name="text">
+    <string>.md</string>
+   </property>
+  </action>
+  <action name="actionJs">
+   <property name="text">
+    <string>.js</string>
+   </property>
+  </action>
+  <action name="actionH">
+   <property name="text">
+    <string>.h</string>
+   </property>
+  </action>
+  <action name="actionHs">
+   <property name="text">
+    <string>.hs</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

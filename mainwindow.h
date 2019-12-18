@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QFutureWatcher>
 #include <QMutex>
+#include <QHash>
 
 namespace Ui {
 class MainWindow;
@@ -27,15 +28,18 @@ private slots:
     void afterScan();
     void changeLine();
     bool cancel();
+    void chooseFileType();
     //void setProgress(qint64 x);
 
 signals:
     void setProgress(qint64 x);
 
 private:
-    void checkFile(QString const& file);
+    void checkFile(QFileInfo const& file);
     void toStartState();
     quint64 searchInBuffer(QString const& buffer);
+
+    enum state {START, READY_TO_SEARCH, SCAN, SEARCH};
 
     QMutex addToResultList;
 
@@ -43,11 +47,15 @@ private:
 
     Ui::MainWindow *ui;
     QString line;
-    QVector<QString> files;
+    QString currentDirectoryName;
+    state currentState = START;
+    QVector<QFileInfo> files;
+    QHash<QString, bool> filters;
 
     QFutureWatcher<void> scanning;
     QFutureWatcher<void> searching;
 
+    QAtomicInt filtesSize = 0;
     QAtomicInt dirInQueue = 0;
     QAtomicInt finishedDir = 0;
     bool directoryChoose = false;
