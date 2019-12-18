@@ -62,32 +62,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 }
 
 void MainWindow::addFilterAction(QAction *action) {
-    filters.actions.push_back(action);
+    filters.actions.push_back(QSharedPointer<QAction>(action));
     filters.activeState[action->text()] = false;
 }
 
 void MainWindow::connectAllFilters() {
-    for (QAction* filter : filters.actions) {
-        connect(filter, &QAction::triggered, this, &MainWindow::chooseFileType);
+    for (const QSharedPointer<QAction>& filter : filters.actions) {
+        connect(filter.data(), &QAction::triggered, this, &MainWindow::chooseFileType);
     }
 }
 
-/*void MainWindow::filterEnabled(bool isEnabled) {
-    ui->actionTxt->setEnabled(isEnabled);
-    ui->actionCpp->setEnabled(isEnabled);
-    ui->actionJava->setEnabled(isEnabled);
-    ui->actionKt->setEnabled(isEnabled);
-    ui->actionPdf->setEnabled(isEnabled);
-    ui->actionCss->setEnabled(isEnabled);
-    ui->actionHtml->setEnabled(isEnabled);
-    ui->actionMd->setEnabled(isEnabled);
-    ui->actionJs->setEnabled(isEnabled);
-    ui->actionH->setEnabled(isEnabled);
-    ui->actionHs->setEnabled(isEnabled);
-}*/
-
 void MainWindow::Filters::setEnabled(bool isEnabled) {
-    for (QAction* filter : actions) {
+    for (const QSharedPointer<QAction>& filter : actions) {
         filter->setEnabled(isEnabled);
     }
 }

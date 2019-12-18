@@ -30,19 +30,17 @@ private slots:
     void changeLine();
     bool cancel();
     void chooseFileType();
-    //void setProgress(qint64 x);
 
 signals:
-    void setProgress(qint64 x);
+    void setProgress(qint64 progress);
 
 private:
     enum state {START, READY_TO_SEARCH, SCAN, SEARCH};
 
     struct Filters {
         QMap<QString, bool> activeState;
-        QVector<QAction *> actions;
+        QVector<QSharedPointer<QAction>> actions;
         void setEnabled(bool isEnabled);
-        void clear();
         void chooseFileType();
         bool getActiveState(const QString& type);
         QAtomicInt filtesSize = 0;
@@ -57,7 +55,6 @@ private:
     void toStartState();
     quint64 searchInBuffer(QString const& buffer);
     void changeState(state s);
-    //void filterEnabled(bool isEnabled);
 
     QMutex addToResultList;
 
