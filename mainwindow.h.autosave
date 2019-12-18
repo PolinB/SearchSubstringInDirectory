@@ -30,7 +30,6 @@ private slots:
     void changeLine();
     bool cancel();
     void chooseFileType();
-    //void setProgress(qint64 x);
 
 signals:
     void setProgress(qint64 x);
@@ -57,7 +56,6 @@ private:
     void toStartState();
     quint64 searchInBuffer(QString const& buffer);
     void changeState(state s);
-    //void filterEnabled(bool isEnabled);
 
     QMutex addToResultList;
 
