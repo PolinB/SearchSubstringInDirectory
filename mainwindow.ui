@@ -82,6 +82,9 @@
     <property name="title">
      <string>Filters</string>
     </property>
+    <addaction name="separator"/>
+    <addaction name="actionAddNewFilter"/>
+    <addaction name="separator"/>
     <addaction name="actionTxt"/>
     <addaction name="actionH"/>
     <addaction name="actionCpp"/>
@@ -227,6 +230,15 @@
   <action name="actionHs">
    <property name="text">
     <string>.hs</string>
+   </property>
+  </action>
+  <action name="actionAddNewFilter">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/pref/img/filter.png</normaloff>:/pref/img/filter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add new filter</string>
    </property>
   </action>
  </widget>

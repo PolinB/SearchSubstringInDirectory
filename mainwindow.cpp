@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 
 #include <iostream>
+
+#include <QDesktopServices>
 #include <QCommonStyle>
 #include <QDesktopWidget>
 #include <QDir>
@@ -18,6 +20,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
+    ui->inputLineEdit->setMaxLength(256);
 
     addFilterAction(ui->actionTxt);
     addFilterAction(ui->actionCpp);
@@ -36,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->actionExit, &QAction::triggered, this, &QApplication::quit);
 
     connectAllFilters();
+
+    connect(ui->actionAddNewFilter, &QAction::triggered, this, &MainWindow::openDialog);
+
 
     connect(ui->inputLineEdit, &QLineEdit::textChanged, this, &MainWindow::changeLine);
     connect(ui->actionClearInput, &QAction::triggered, ui->inputLineEdit, &QLineEdit::clear);
@@ -59,11 +65,38 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
            isCleared = 0;
        }
     });
+
+    connect(ui->resultListWidget, &QListWidget::itemDoubleClicked, this, &MainWindow::openItemFile);
+}
+
+void MainWindow::addNewFilterName(const QString &name) {
+    QAction* newAction = ui->menuFilters->addAction(name);
+    addFilterAction(newAction);
+    connect(newAction, &QAction::triggered, this, &MainWindow::chooseFileType);
+}
+
+void MainWindow::openDialog() {
+    QSharedPointer<Dialog> addFilterDialog(new Dialog(this));
+    addFilterDialog->setModal(true);
+    if (addFilterDialog->exec()) {
+        addNewFilterName(addFilterDialog->getValue());
+    }
+}
+
+void MainWindow::openItemFile(QListWidgetItem* item)
+{
+    QString path = item->text();
+    QUrl url = QUrl::fromLocalFile(path);
+    bool success = QDesktopServices::openUrl(url);
+    if (!success) {
+        QMessageBox::warning(this, "Opening file", "File could not be opened.", QMessageBox::Ok);
+    }
 }
 
 void MainWindow::addFilterAction(QAction *action) {
     filters.actions.push_back(QSharedPointer<QAction>(action));
-    filters.activeState[action->text()] = false;
+    filters.activeState[action->text().toLower()] = false;
+    action->setEnabled(filters.isEnabaled);
 }
 
 void MainWindow::connectAllFilters() {
@@ -72,9 +105,14 @@ void MainWindow::connectAllFilters() {
     }
 }
 
-void MainWindow::Filters::setEnabled(bool isEnabled) {
+void MainWindow::Filters::setEnabled(bool newIsEnabled) {
+    if (isEnabaled == newIsEnabled) {
+        return;
+    } else {
+        isEnabaled = newIsEnabled;
+    }
     for (const QSharedPointer<QAction>& filter : actions) {
-        filter->setEnabled(isEnabled);
+        filter->setEnabled(newIsEnabled);
     }
 }
 
@@ -82,7 +120,7 @@ bool MainWindow::Filters::getActiveState(const QString& suffix) {
     bool result;
 
     checkState.lock();
-    result = activeState[suffix];
+    result = activeState[suffix.toLower()];
     checkState.unlock();
 
     return result;
@@ -104,6 +142,7 @@ void MainWindow::chooseFileType() {
 }
 
 void MainWindow::toStartState() {
+    ui->labelOutput->setText("This text in files: ");
     filters.setEnabled(true);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0, 100);
@@ -149,6 +188,8 @@ void MainWindow::selectDirectory() {
                                                     QString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!directoryName.isEmpty()) {
         files.clear();
+        ui->labelOutput->setText("This text in files: ");
+        directoryChoose = false;
         ui->resultListWidget->clear();
         ui->actionCancel->setEnabled(true);
         ui->actionFind->setEnabled(false);
@@ -159,6 +200,7 @@ void MainWindow::selectDirectory() {
 
         dirInQueue = 1;
         finishedDir = 0;
+        activeFileOrDir = 0;
         currentDirectoryName = directoryName;
         scanning.setFuture(QtConcurrent::run([this, directoryName] {scanDirectory(directoryName);}));
     }
@@ -169,14 +211,21 @@ void MainWindow::scanDirectory(QString const& directoryName) {
         return;
     }
     QDir directory(directoryName);
-    QFileInfoList list = directory.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+    QFileInfoList list = directory.entryInfoList(QDir::NoDotAndDotDot | QDir::Dirs | QDir::Files | QDir::NoSymLinks);
     for (QFileInfo& fileInfo : list) {
+
         if (isCanceled == 1) {
             return;
         }
+
         QString path = fileInfo.absoluteFilePath();
+
         if (fileInfo.isFile()) {
+
+            addToResultList.lock();
             files.push_back(fileInfo);
+            addToResultList.unlock();
+
         } else if (fileInfo.isDir()){
             ++dirInQueue;
             scanDirectory(path);
@@ -187,6 +236,17 @@ void MainWindow::scanDirectory(QString const& directoryName) {
 }
 
 void MainWindow::afterScan() {
+    if (isCanceled) {
+        directoryChoose = false;
+        currentDirectoryName = false;
+        ui->labelOutput->setText("This text in files: ");
+        ui->statusBar->showMessage("Scanning was canceled.");
+        files.clear();
+        isCanceled = 0;
+    }
+    ui->progressBar->setDisabled(true);
+    ui->actionCancel->setEnabled(false);
+
     if (!isCanceled) {
         directoryChoose = true;
         ui->labelOutput->setText("This text in files: " + currentDirectoryName);
@@ -194,19 +254,12 @@ void MainWindow::afterScan() {
         if (!line.isEmpty()) {
             ui->actionFind->setEnabled(true);
         }
-    } else {
-        directoryChoose = false;
-        currentDirectoryName = false;
-        ui->labelOutput->setText("This text in files: ");
 
-        files.clear();
-        isCanceled = 0;
+        ui->statusBar->showMessage("End scanning.");
     }
-    ui->progressBar->setDisabled(true);
-
-    ui->actionCancel->setEnabled(false);
-    ui->statusBar->showMessage("End scanning.");
 }
+
+
 
 void MainWindow::runSearch() {
     ui->actionCancel->setEnabled(true);
@@ -222,10 +275,10 @@ void MainWindow::runSearch() {
 
     ui->statusBar->showMessage("Searching...");
 
-    searching.setFuture(QtConcurrent::map(files, [this] (QFileInfo const& fileInfo) { checkFile(fileInfo);}));
+    searching.setFuture(QtConcurrent::map(files, [this] (QFileInfo const& fileInfo) { searchInFile(fileInfo);}));
 }
 
-void MainWindow::checkFile(QFileInfo const& fileInfo) {
+void MainWindow::searchInFile(QFileInfo const& fileInfo) {
     QFile file(fileInfo.absoluteFilePath());
 
     QString suffix = "." + fileInfo.completeSuffix();
@@ -280,17 +333,19 @@ void MainWindow::afterSearch() {
         toStartState();
         isCleared = 0;
         isCanceled = 0;
-    } else {
-        ui->inputLineEdit->setReadOnly(false);
-        ui->actionFind->setEnabled(true);
-        ui->actionChooseDirectory->setEnabled(true);
-        ui->actionCancel->setEnabled(false);
-        ui->progressBar->setDisabled(true);
-        filters.setEnabled(true);
+        return;
+    } else if (isCanceled) {
         isCanceled = 0;
+        ui->statusBar->showMessage("Searching was canceled.");
+    } else {
+        ui->statusBar->showMessage("End searching.");
     }
-
-    ui->statusBar->showMessage("End searching.");
+    ui->inputLineEdit->setReadOnly(false);
+    ui->actionFind->setEnabled(true);
+    ui->actionChooseDirectory->setEnabled(true);
+    ui->actionCancel->setEnabled(false);
+    ui->progressBar->setDisabled(true);
+    filters.setEnabled(true);
 }
 
 MainWindow::~MainWindow() {

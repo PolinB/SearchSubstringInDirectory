@@ -8,6 +8,9 @@
 #include <QMutex>
 #include <QHash>
 #include <QMap>
+#include <QListWidget>
+
+#include "dialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -21,7 +24,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+public slots:
+    void addNewFilterName(const QString& name);
+
 private slots:
+    void openDialog();
     void selectDirectory();
     void scanDirectory(QString const& directoryName);
     void runSearch();
@@ -30,11 +37,13 @@ private slots:
     void changeLine();
     bool cancel();
     void chooseFileType();
+    void openItemFile(QListWidgetItem* item);
 
 signals:
     void setProgress(qint64 progress);
 
 private:
+    //Dialog* addFilterDialog;
     enum state {START, READY_TO_SEARCH, SCAN, SEARCH};
 
     struct Filters {
@@ -44,21 +53,23 @@ private:
         void chooseFileType();
         bool getActiveState(const QString& type);
         QAtomicInt filtesSize = 0;
+        QAtomicInt isEnabaled = 1;
         QMutex checkState;
     };
 
     Filters filters;
 
+
     void addFilterAction(QAction *action);
     void connectAllFilters();
-    void checkFile(QFileInfo const& file);
+    void searchInFile(QFileInfo const& file);
     void toStartState();
     quint64 searchInBuffer(QString const& buffer);
     void changeState(state s);
 
     QMutex addToResultList;
 
-    static const quint32 MAX_BLOCK_SIZE = 1024;
+    static const quint32 MAX_BLOCK_SIZE = 2048;
 
     Ui::MainWindow *ui;
     QString line;
@@ -69,6 +80,7 @@ private:
     QFutureWatcher<void> scanning;
     QFutureWatcher<void> searching;
 
+    QAtomicInt activeFileOrDir = 0;
     QAtomicInt dirInQueue = 0;
     QAtomicInt finishedDir = 0;
     bool directoryChoose = false;
