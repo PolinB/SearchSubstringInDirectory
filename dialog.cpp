@@ -20,10 +20,14 @@ QString Dialog::getValue() {
 }
 
 void Dialog::activeOk() {
-    if (ui->lineEdit->text().size() > 0 && ui->lineEdit->text()[0] == ".") {
+    if (ui->lineEdit->text().size() > 1 && ui->lineEdit->text()[0] == ".") {
         ui->addButton->setEnabled(true);
+        ui->addButton->setDefault(true);
+        ui->cancelButton->setDefault(false);
     } else {
         ui->addButton->setEnabled(false);
+        ui->addButton->setDefault(false);
+        ui->cancelButton->setDefault(true);
     }
 }
 

@@ -158,6 +158,7 @@ void MainWindow::toStartState() {
     ui->actionFind->setEnabled(false);
     ui->actionCancel->setEnabled(false);
     ui->inputLineEdit->setReadOnly(false);
+    ui->actionClearInput->setEnabled(true);
 }
 
 void MainWindow::changeLine() {
@@ -263,6 +264,7 @@ void MainWindow::afterScan() {
 
 void MainWindow::runSearch() {
     ui->actionCancel->setEnabled(true);
+    ui->actionClearInput->setEnabled(false);
     filters.setEnabled(false);
 
     ui->actionChooseDirectory->setEnabled(false);
@@ -340,6 +342,7 @@ void MainWindow::afterSearch() {
     } else {
         ui->statusBar->showMessage("End searching.");
     }
+    ui->actionClearInput->setEnabled(true);
     ui->inputLineEdit->setReadOnly(false);
     ui->actionFind->setEnabled(true);
     ui->actionChooseDirectory->setEnabled(true);
