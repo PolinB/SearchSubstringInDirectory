@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(ui->actionAddNewFilter, &QAction::triggered, this, &MainWindow::openDialog);
 
+    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::about);
 
     connect(ui->inputLineEdit, &QLineEdit::textChanged, this, &MainWindow::changeLine);
     connect(ui->actionClearInput, &QAction::triggered, ui->inputLineEdit, &QLineEdit::clear);
@@ -67,6 +68,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     });
 
     connect(ui->resultListWidget, &QListWidget::itemDoubleClicked, this, &MainWindow::openItemFile);
+}
+
+void MainWindow::about() {
+    QMessageBox instrictionDialog(QMessageBox::NoIcon,
+        "About",
+        "This program help you to find substring in all files in chosen directory and its subdirectories.\n\n"
+        "1) Choose directory.\n"
+        "2) Input substring, which you want find. Its size must be less then 256 symbols.\n"
+        "3) If you want search in files with fixed suffix, then set filters. Also we can add your filters. It must be string starting with dot, line length less then 7.",
+        QMessageBox::Ok, this);
+    instrictionDialog.exec();
 }
 
 void MainWindow::addNewFilterName(const QString &name) {

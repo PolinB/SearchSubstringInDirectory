@@ -39,6 +39,7 @@ private slots:
     bool cancel();
     void chooseFileType();
     void openItemFile(QListWidgetItem* item);
+    void about();
 
 signals:
     void setProgress(qint64 progress);
