@@ -76,7 +76,7 @@ void MainWindow::addNewFilterName(const QString &name) {
 }
 
 void MainWindow::openDialog() {
-    QSharedPointer<Dialog> addFilterDialog(new Dialog(this));
+    std::unique_ptr<Dialog> addFilterDialog(new Dialog(this));
     addFilterDialog->setModal(true);
     if (addFilterDialog->exec()) {
         addNewFilterName(addFilterDialog->getValue());
@@ -351,6 +351,4 @@ void MainWindow::afterSearch() {
     filters.setEnabled(true);
 }
 
-MainWindow::~MainWindow() {
-    delete ui;
-}
+MainWindow::~MainWindow() {}

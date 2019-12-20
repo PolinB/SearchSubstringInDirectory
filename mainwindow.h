@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QMap>
 #include <QListWidget>
+#include <memory>
 
 #include "dialog.h"
 
@@ -43,9 +44,6 @@ signals:
     void setProgress(qint64 progress);
 
 private:
-    //Dialog* addFilterDialog;
-    enum state {START, READY_TO_SEARCH, SCAN, SEARCH};
-
     struct Filters {
         QMap<QString, bool> activeState;
         QVector<QSharedPointer<QAction>> actions;
@@ -65,16 +63,14 @@ private:
     void searchInFile(QFileInfo const& file);
     void toStartState();
     quint64 searchInBuffer(QString const& buffer);
-    void changeState(state s);
 
     QMutex addToResultList;
 
     static const quint32 MAX_BLOCK_SIZE = 2048;
 
-    Ui::MainWindow *ui;
+    std::unique_ptr<Ui::MainWindow> ui;
     QString line;
     QString currentDirectoryName;
-    state currentState = START;
     QVector<QFileInfo> files;
 
     QFutureWatcher<void> scanning;

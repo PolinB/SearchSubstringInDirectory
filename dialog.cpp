@@ -36,7 +36,4 @@ void Dialog::addFilter() {
     accept();
 }
 
-Dialog::~Dialog()
-{
-    delete ui;
-}
+Dialog::~Dialog() {}

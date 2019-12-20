@@ -2,6 +2,7 @@
 #define DIALOG_H
 
 #include <QDialog>
+#include <memory>
 
 namespace Ui {
 class Dialog;
@@ -22,7 +23,7 @@ private slots:
 
 private:
     QString value;
-    Ui::Dialog *ui;
+    std::unique_ptr<Ui::Dialog> ui;
 };
 
 #endif // DIALOG_H
